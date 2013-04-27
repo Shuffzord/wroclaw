@@ -1,0 +1,155 @@
+﻿<script type="text/javascript">
+
+    var Debug =
+    {
+        msg: function (msg) {
+            var debugContainer = $("#debug");
+            debugContainer.append(msg + "<br/>");
+            document.getElementById('debug').scrollTop = document.getElementById('debug').scrollHeight;
+        }
+    };
+    
+
+        function Point(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function Sprite(guid, sheetSize, frameSize, position, img, frameRate, layer) {
+            this.guid = guid;
+            this.x = position.x;
+            this.y = position.y;
+            this.width = frameSize.x;
+            this.height = frameSize.y;
+            this.onDragEnd = $.noop;
+            var that = this;
+            var kSprite;
+
+            this.collides = function (hitbox) {
+                return that.x < hitbox.x + hitbox.width &&
+                    that.x + that.width > hitbox.x &&
+                    that.y < hitbox.y + hitbox.height &&
+                    that.y + that.height > hitbox.y;
+            };
+
+            this.draw = function () {
+                var imageObj = new Image();
+
+                var currentFrame = new Point(0, 0);
+                var animations = { idle: [] };
+
+                while (currentFrame.y * frameSize.y < sheetSize.y) {
+                    while (currentFrame.x * frameSize.x < sheetSize.x) {
+                        animations.idle.push({
+                            x: frameSize.x * currentFrame.x,
+                            y: frameSize.y * currentFrame.y,
+                            width: frameSize.x,
+                            height: frameSize.y
+                        });
+                        ++currentFrame.x;
+                    }
+                    currentFrame.x = 0;
+                    ++currentFrame.y;
+                }
+
+                imageObj.onload = function () {
+                    kSprite = new Kinetic.Sprite({
+                        x: position.x,
+                        y: position.y,
+                        image: imageObj,
+                        animation: 'idle',
+                        animations: animations,
+                        frameRate: frameRate,
+                        index: 0,
+                        draggable: true,
+
+                    });
+
+                    kSprite.on('mouseover', function () {
+                        document.body.style.cursor = 'pointer';
+                    });
+                    kSprite.on('mouseout', function () {
+                        document.body.style.cursor = 'default';
+                    });
+                    kSprite.on('dragend', function () {
+                        that.x = this.getX();
+                        that.y = this.getY();
+                        that.onDragEnd();
+                    });
+                    layer.add(kSprite);
+                    kSprite.start();
+                };
+
+                imageObj.src = img;
+            };
+
+            this.hide = function () {
+                kSprite.remove();
+            };
+        }
+
+</script>
+
+<div id="container">
+</div>
+<div id="debug" class="debug-window"></div>
+
+<script type="text/javascript">
+
+    $(function () {
+        var stage = new window.Kinetic.Stage({
+            container: 'container',
+            width: 800,
+            height: 600
+        });
+
+        var layer = new window.Kinetic.Layer();
+        stage.add(layer);
+        var spritelist = [];
+
+        var white = new Sprite(1,new Point(288, 172), new Point(96, 96), new Point(0, 0), '@Url.Content("~/Content/Sprites/bubble.png")', 7, layer);
+        var black = new Sprite(2,new Point(288, 96), new Point(96, 96), new Point(100, 100), '@Url.Content("~/Content/Sprites/black.png")', 7, layer);
+
+        spritelist.push(white);
+        spritelist.push(black);
+
+        var hub = $.connection.Sprites;
+        hub.client.match = function (sprite,sprite,result) {
+            for (var i = 0; i < spritelist.length; i++) {
+                spritelist[i].hide();
+            }
+            var triforce = new Sprite(3,new Point(380, 94), new Point(95, 94), new Point(0, 0), '@Url.Content("~/Content/Sprites/triforce.png")', 7, layer);
+            triforce.draw();
+        };
+    
+
+        hub.client.debugMsg = function(msg) {
+            Debug.msg(msg);
+        };
+        
+    
+
+        $.connection.hub.start().done(function () {
+            
+
+
+            spritelist.forEach(function (sprite) {
+                sprite.onDragEnd = function () {
+                    var currIndex = spritelist.indexOf(sprite);
+                    for (var i = 0; i < spritelist.length; i++) {
+                        if (i != currIndex) {
+                            if (sprite.collides(spritelist[i])) {
+                                hub.server.match(sprite.guid, sprite.guid);
+                            }
+                        }
+                    }
+                };
+            });
+
+            spritelist.forEach(function (sprite) {
+                sprite.draw();
+            });
+        });
+    });
+
+</script>

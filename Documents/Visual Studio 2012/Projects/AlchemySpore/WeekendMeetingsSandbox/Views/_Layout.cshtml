@@ -1,0 +1,15 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+</head>
+<body>
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="http://d3lp1msu2r81bx.cloudfront.net/kjs/js/lib/kinetic-v4.4.0.min.js"></script>
+    <script src="~/Scripts/jquery.signalR-1.0.1.min.js"></script>
+    <script src="@Url.Content("~/signalr/hubs")"></script>
+    @RenderBody()
+</body>
+</html>

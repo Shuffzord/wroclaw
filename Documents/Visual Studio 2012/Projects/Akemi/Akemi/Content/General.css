@@ -1,0 +1,14 @@
+﻿.kineticjs-content
+{
+    border: 1px black solid;
+}
+
+.debug-window
+{
+    overflow-y: auto;
+    width: 800px;
+    height: 172px;
+    border: 1px red solid;
+    font-family: Tahoma, Verdana, Arial;
+    font-size: 0.8em;
+}
